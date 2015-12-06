@@ -13,6 +13,7 @@ int changeCounter;
 #define TK   GColorFromRGB(0,255,0)
 #define BL   GColorBlack
 #define CL   GColorClear
+#define TLST  text_layer_set_text
 
   static void switchBlack(Window *window) {
     window_set_background_color(window, BL);
@@ -28,10 +29,10 @@ static void update_battery_info() {
 BatteryChargeState charge_state = battery_state_service_peek();
 if (charge_state.is_charging) {
   //snprintf(s_battery_buffer, sizeof(s_battery_buffer), "charging");
-  text_layer_set_text(s_battery_layer, "^^%");
+  TLST(s_battery_layer, "^^%");
 } else {
   snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%", charge_state.charge_percent);
-  text_layer_set_text(s_battery_layer, s_battery_buffer);
+  TLST(s_battery_layer, s_battery_buffer);
 }
   
 }

@@ -3,11 +3,21 @@
     "capabilities": [
         ""
     ],
-    "companyName": "Sverre",
+    "companyName": "skeldoy",
     "longName": "MyFace",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "file": "images/myfacesh.png",
+                "menuIcon": true,
+                "name": "myfacesh",
+                "targetPlatforms": [
+                    "chalk"
+                ],
+                "type": "png"
+            }
+        ]
     },
     "sdkVersion": "3",
     "shortName": "MyFace",
