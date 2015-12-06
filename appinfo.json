@@ -1,0 +1,22 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Sverre",
+    "longName": "MyFace",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "MyFace",
+    "targetPlatforms": [
+        "chalk"
+    ],
+    "uuid": "13c77440-4a6b-49f9-86cc-8a3770cf770a",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
