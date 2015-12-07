@@ -8,9 +8,9 @@ static TextLayer *s_bt_layer;
 static TextLayer *s_battery_layer;
 static TextLayer *s_day_layer;
 static TextLayer *s_daynumb_layer;
-int changeCounter;
 
 #define TK   GColorFromRGB(0,255,0)
+#define TKB  GColorFromRGB(85,255,0)
 #define BL   GColorBlack
 #define CL   GColorClear
 #define TLST  text_layer_set_text
@@ -22,7 +22,6 @@ int changeCounter;
 static void switchClear(Window *window) {
     window_set_background_color(window, CL);
 }
-
 
 static void update_battery_info() {
   static char s_battery_buffer[8];
@@ -46,14 +45,8 @@ static void update_time() {
   static char s_buffer[8];
   strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ?
                                           "%H:%M" : "%I:%M", tick_time);
-
   // Display this time on the TextLayer
-  text_layer_set_text(s_time_layer, s_buffer);
-  
-//int hour = tick_time->tm_hour;
-//  if ((hour > 8) | (hour < 18)) { switchClear(s_main_window); }
-//  else { switchBlack(s_main_window); }
-  
+  TLST(s_time_layer, s_buffer);
 }
 
 static void update_date() {
@@ -61,16 +54,16 @@ static void update_date() {
   time_t temp = time(NULL); 
   struct tm *tick_time = localtime(&temp);
 
-  // Write the current hours and minutes into a buffer
+  // Write the current date and month into a buffer
   static char s_buffer[8];
   strftime(s_buffer, sizeof(s_buffer), "%d/%m" , tick_time);
-  
+  // Week Number
   static char s_w_buffer[8];
   strftime(s_w_buffer, sizeof(s_w_buffer), "%%W: %W", tick_time);
-  
+  // Day-Name
   static char s_day_buffer[10];
   strftime(s_day_buffer, sizeof(s_day_buffer), "%A", tick_time);
-  
+  // Day-of-the-year
   static char s_daynumb_buffer[8];
   strftime(s_daynumb_buffer, sizeof(s_daynumb_buffer), "%%j: %j", tick_time);
   
@@ -82,20 +75,15 @@ static void update_date() {
   update_battery_info();
 }
 
+// this is called every minute. If we got 0 hours and 0 minutes we also update date.
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
-  changeCounter++;
-  //
-  //if (changeCounter == 5) {
   if (tick_time->tm_hour == 0) {
     if (tick_time->tm_min == 0) {
       update_date();
     }
    }
-  //changeCounter=0; }
 }
-
-
 
 static void main_window_load(Window *window) {
   // Get information about the Window
@@ -103,7 +91,7 @@ static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // Create the TextLayer with specific bounds
+  // Create the TextLayers with specific bounds
   s_date_layer = text_layer_create(
       GRect(0,PBL_IF_ROUND_ELSE(5,5),bounds.size.w,50));
  
@@ -127,7 +115,7 @@ static void main_window_load(Window *window) {
   
   // Improve the layout to be more like a watchface
   text_layer_set_background_color(s_time_layer, BL);
-  text_layer_set_text_color(s_time_layer,TK);
+  text_layer_set_text_color(s_time_layer,TKB);
   text_layer_set_text(s_time_layer, "00:00");
   text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
@@ -176,7 +164,7 @@ if (connection_service_peek_pebble_app_connection()) {
   text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
 
   
-  // Add it as a child layer to the Window's root layer
+  // Add them as children layers to the Window's root layer
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
     layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
       layer_add_child(window_layer, text_layer_get_layer(s_week_layer));
@@ -185,27 +173,25 @@ if (connection_service_peek_pebble_app_connection()) {
       layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
         layer_add_child(window_layer, text_layer_get_layer(s_daynumb_layer));
 
-
 }
-  
-
 
 static void main_window_unload(Window *window) {
-  // Destroy TextLayer
+  // Destroy TextLayers
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_week_layer);
   text_layer_destroy(s_date_layer);
   text_layer_destroy(s_bt_layer);
-    text_layer_destroy(s_battery_layer);
-    text_layer_destroy(s_day_layer);    
+  text_layer_destroy(s_battery_layer);
+  text_layer_destroy(s_day_layer);    
   text_layer_destroy(s_daynumb_layer);
 }
 
+  // The bluetooth handler
 void bt_handler(bool connected) {
   if (connected) {
       text_layer_set_text(s_bt_layer,"BT: V");
   } else {
-      text_layer_set_text(s_bt_layer, "BT: V");
+      text_layer_set_text(s_bt_layer, "BT: X");
   }
 }
 
@@ -222,8 +208,7 @@ static void init() {
   // Show the Window on the watch, with animated=true
   window_stack_push(s_main_window, true);
 
-  changeCounter=0;
-  // Make sure the time is displayed from the start
+  // Make sure the time and other stuff is displayed from the start
   update_time();
   update_date();
   update_battery_info();
@@ -235,6 +220,7 @@ connection_service_subscribe((ConnectionHandlers) {
   .pebble_app_connection_handler = bt_handler
 });
 #endif
+  battery_state_service_subscribe(update_battery_info);
 
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
